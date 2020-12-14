@@ -1,0 +1,118 @@
+openapi: 3.0.0
+info:
+  version: 0.1.0
+  title: Open Insurance Initiative Requirements API
+  description: This page contains the documentation for the Open Insurance Initiative Requirements API.
+  contact:
+    name: Open Insurance Initiative
+    email: openinsuranceinitiative@gmail.com
+  license:
+    name: MIT License
+    url: https://spdx.org/licenses/MIT.html
+servers:
+  - url: /open-insurance/v0.1/rapi
+paths:
+  /requirements:
+    post:
+      description: |
+        Called when it is determined that an action is needed with regards to the issuance of a policy. 
+
+        This corresponds with the `urn:open-insurance-initiative:annuity:new-business:requirement:created` event.
+      operationId: createRequirement
+      security:
+        - PartnerOpenIdConnect:
+            - Requirement.Create
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RequirementBase"
+      responses:
+        201:
+          description: Created
+        400:
+          description: Bad Request
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+  /requirements/{id}/satisfy:
+    put:
+      description: |
+        Called when a requirement has been satisfied. 
+
+        This corresponds with the `urn:open-insurance-initiative:annuity:new-business:requirement:satisfied` event.
+      operationId: satisfyRequirement
+      security:
+        - PartnerOpenIdConnect:
+            - Requirement.Satisify
+      parameters:
+        - name: id
+          in: path
+          description: The unique identifier of the satisfied requirement.
+          required: true
+          schema:
+            $ref: "#/components/schemas/RequirementId"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Satisfaction"
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+components:
+  securitySchemes:
+    PartnerOpenIdConnect:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
+  schemas:
+    CaseNumber:
+      type: string
+      description: The carrier-issued case number associated with the issuance of a policy.
+      minLength: 1
+      maxLength: 64
+    RequirementId:
+      type: string
+      description: The unique identifier of a requirement.
+      minLength: 1
+      maxLength: 64
+    RequirementBase:
+      description: Represents an action that is or was needed in regards to the issuance of a policy.
+      type: object
+      required:
+        - case
+        - id
+        - description
+        - created
+      properties:
+        case:
+          $ref: "#/components/schemas/CaseNumber"
+        id:
+          $ref: "#/components/schemas/RequirementId"
+        description:
+          type: string
+          description: A description of the Requirement.
+          minLength: 1
+        created:
+          type: string
+          format: date-time
+          description: The moment the requirement was created.
+    Satisfaction:
+      type: object
+      required:
+        - case
+        - satisfied
+      properties:
+        case:
+          $ref: "#/components/schemas/CaseNumber"
+        satisfied:
+          type: string
+          format: date-time
+          description: The moment the requirement was satisfied.
