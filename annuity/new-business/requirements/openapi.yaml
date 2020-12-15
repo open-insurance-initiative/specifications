@@ -1,6 +1,6 @@
-openapi: 3.0.0
+openapi: 3.0.3
 info:
-  version: 0.1.0
+  version: 0.1.1
   title: Open Insurance Initiative Requirements API
   description: This page contains the documentation for the Open Insurance Initiative Requirements API.
   contact:
@@ -10,9 +10,9 @@ info:
     name: MIT License
     url: https://spdx.org/licenses/MIT.html
 servers:
-  - url: /open-insurance/v0.1/rapi
+  - url: /open-insurance/annuity/nb/rapi
 paths:
-  /requirements:
+  /carriers/{carrier}/cases/{case}/requirements:
     post:
       description: |
         Called when it is determined that an action is needed with regards to the issuance of a policy. 
@@ -22,11 +22,14 @@ paths:
       security:
         - PartnerOpenIdConnect:
             - Requirement.Create
+      parameters:
+        - $ref: "#/components/parameters/Carrier"
+        - $ref: "#/components/parameters/Case"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/RequirementBase"
+              $ref: "#/components/schemas/CreatedEvent"
       responses:
         201:
           description: Created
@@ -36,7 +39,7 @@ paths:
           description: Unauthorized
         403:
           description: Forbidden
-  /requirements/{id}/satisfy:
+  /carriers/{carrier}/cases/{case}/requirements/{id}/satisfy:
     put:
       description: |
         Called when a requirement has been satisfied. 
@@ -47,17 +50,14 @@ paths:
         - PartnerOpenIdConnect:
             - Requirement.Satisify
       parameters:
-        - name: id
-          in: path
-          description: The unique identifier of the satisfied requirement.
-          required: true
-          schema:
-            $ref: "#/components/schemas/RequirementId"
+        - $ref: "#/components/parameters/Carrier"
+        - $ref: "#/components/parameters/Case"
+        - $ref: "#/components/parameters/Requirement"
       requestBody:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/Satisfaction"
+              $ref: "#/components/schemas/SatisfiedEvent"
       responses:
         200:
           description: OK
@@ -72,7 +72,34 @@ components:
     PartnerOpenIdConnect:
       type: openIdConnect
       openIdConnectUrl: https://example.com/.well-known/openid-configuration
+  parameters:
+    Carrier:
+      name: carrier
+      in: path
+      description: The unique identifier of the insurance company.
+      required: true
+      schema:
+        $ref: "#/components/schemas/CarrierCode"
+    Case:
+      name: case
+      in: path
+      description: The carrier-issued case number associated with the issuance of a policy.
+      required: true
+      schema:
+        $ref: "#/components/schemas/CaseNumber"
+    Requirement:
+      name: id
+      in: path
+      description: The unique identifier of the satisfied requirement.
+      required: true
+      schema:
+        $ref: "#/components/schemas/RequirementId"
   schemas:
+    CarrierCode:
+      type: string
+      description: A unique identifier of the insurance carrier.
+      minLength: 4
+      maxLength: 32
     CaseNumber:
       type: string
       description: The carrier-issued case number associated with the issuance of a policy.
@@ -83,17 +110,15 @@ components:
       description: The unique identifier of a requirement.
       minLength: 1
       maxLength: 64
-    RequirementBase:
+    CreatedEvent:
       description: Represents an action that is or was needed in regards to the issuance of a policy.
       type: object
+      additionalProperties: false
       required:
-        - case
         - id
         - description
         - created
       properties:
-        case:
-          $ref: "#/components/schemas/CaseNumber"
         id:
           $ref: "#/components/schemas/RequirementId"
         description:
@@ -104,14 +129,12 @@ components:
           type: string
           format: date-time
           description: The moment the requirement was created.
-    Satisfaction:
+    SatisfiedEvent:
       type: object
+      additionalProperties: false
       required:
-        - case
         - satisfied
       properties:
-        case:
-          $ref: "#/components/schemas/CaseNumber"
         satisfied:
           type: string
           format: date-time
