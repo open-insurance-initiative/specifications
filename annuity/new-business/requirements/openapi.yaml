@@ -21,7 +21,7 @@ paths:
       operationId: createRequirement
       security:
         - PartnerOpenIdConnect:
-            - Requirement.Create
+            - OpenInsurance.Requirements
       parameters:
         - $ref: "#/components/parameters/Carrier"
         - $ref: "#/components/parameters/Case"
@@ -48,7 +48,7 @@ paths:
       operationId: satisfyRequirement
       security:
         - PartnerOpenIdConnect:
-            - Requirement.Satisify
+            - OpenInsurance.Requirements
       parameters:
         - $ref: "#/components/parameters/Carrier"
         - $ref: "#/components/parameters/Case"

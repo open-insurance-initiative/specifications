@@ -1,0 +1,174 @@
+openapi: 3.0.3
+info:
+  version: 0.1.1
+  title: Open Insurance Initiative Lifecycle Events API
+  description: This page contains the documentation for the Open Insurance Initiative Lifecycle Events API.
+  contact:
+    name: Open Insurance Initiative
+    email: openinsuranceinitiative@gmail.com
+  license:
+    name: MIT License
+    url: https://spdx.org/licenses/MIT.html
+servers:
+  - url: /open-insurance/annuity/nb/lapi
+paths:
+  /carriers/{carrier}/cases:
+    post:
+      description: |
+        Called when a carrier receives an application for an insurance policy.
+
+        This corresponds with the `urn:open-insurance-initiative:annuity:new-business:lifecycle:application:received` event.
+      operationId: applicationReceived
+      security:
+        - PartnerOpenIdConnect:
+            - OpenInsurance.Lifecycle
+      parameters:
+        - $ref: "#/components/parameters/Carrier"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ReceivedEvent"
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+  /carriers/{carrier}/cases/{case}/issued:
+    put:
+      description: |
+        Called when an insurance policy has been issued.
+
+        This corresponds with the `urn:open-insurance-initiative:annuity:new-business:lifecycle:policy:issued` event.
+      operationId: policyIssued
+      security:
+        - PartnerOpenIdConnect:
+            - OpenInsurance.Lifecycle
+      parameters:
+        - $ref: "#/components/parameters/Carrier"
+        - $ref: "#/components/parameters/Case"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/IssuedEvent"
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+  /carriers/{carrier}/cases/{case}/withdrawn:
+    put:
+      description: |
+        Called when then application for an insurance policy has been withdrawn.
+
+        This corresponds with the `urn:open-insurance-initiative:annuity:new-business:lifecycle:application:withdrawn` event.
+      operationId: applicationWithdrawn
+      security:
+        - PartnerOpenIdConnect:
+            - OpenInsurance.Lifecycle
+      parameters:
+        - $ref: "#/components/parameters/Carrier"
+        - $ref: "#/components/parameters/Case"
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/WithdrawnEvent"
+      responses:
+        200:
+          description: OK
+        400:
+          description: Bad Request
+        401:
+          description: Unauthorized
+        403:
+          description: Forbidden
+components:
+  securitySchemes:
+    PartnerOpenIdConnect:
+      type: openIdConnect
+      openIdConnectUrl: https://example.com/.well-known/openid-configuration
+  parameters:
+    Carrier:
+      name: carrier
+      in: path
+      description: The unique identifier of the insurance company.
+      required: true
+      schema:
+        $ref: "#/components/schemas/CarrierCode"
+    Case:
+      name: case
+      in: path
+      description: The carrier-issued case number associated with the issuance of a policy.
+      required: true
+      schema:
+        $ref: "#/components/schemas/CaseNumber"
+  schemas:
+    CarrierCode:
+      type: string
+      description: A unique identifier of the insurance carrier.
+      minLength: 4
+      maxLength: 32
+    CaseNumber:
+      type: string
+      description: The carrier-issued case number associated with the issuance of a policy.
+      minLength: 1
+      maxLength: 64
+    CaseAlias:
+      type: object
+      additionalProperties: false
+      required:
+        - source
+        - id
+      properties:
+        source:
+          type: string
+          enum:
+            - Carrier
+            - FireLight
+            - DTCC
+        id:
+          $ref: "#/components/schemas/CaseNumber"
+    CaseAliases:
+      type: array
+      items:
+        $ref: "#/components/schemas/CaseAlias"
+    ReceivedEvent:
+      description: Represents when a carrier receives an application for an insurance policy.
+      type: object
+      additionalProperties: false
+      required:
+        - received
+      properties:
+        aliases:
+          $ref: "#/components/schemas/CaseAliases"
+        received:
+          type: string
+          format: date-time
+          description: The date when application was received.
+    IssuedEvent:
+      type: object
+      additionalProperties: false
+      properties:
+        aliases:
+          $ref: "#/components/schemas/CaseAliases"
+    WithdrawnEvent:
+      type: object
+      additionalProperties: false
+      required:
+        - reason
+      properties:
+        aliases:
+          $ref: "#/components/schemas/CaseAliases"
+        reason:
+          type: string
+          description: The justification for withdrawing an application for insurance.
