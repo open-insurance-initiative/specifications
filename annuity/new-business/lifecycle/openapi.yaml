@@ -161,6 +161,10 @@ components:
       properties:
         aliases:
           $ref: "#/components/schemas/CaseAliases"
+        issued:
+          type: string
+          format: date-time
+          description: The date when policy was issued.
     WithdrawnEvent:
       type: object
       additionalProperties: false
@@ -172,3 +176,7 @@ components:
         reason:
           type: string
           description: The justification for withdrawing an application for insurance.
+        withdrawn:
+          type: string
+          format: date-time
+          description: The date when policy was withdrawn.
